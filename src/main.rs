@@ -1,20 +1,26 @@
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, HashMap},
     fs::File,
     io::{BufRead, BufReader},
 };
 
 fn main() {
     let file = File::open("inp.txt").unwrap(); // @return Result<>
-    let mut buf_reader = BufReader::new(file);
-    let mut stats = BTreeMap::<String, (f64, f64, usize, f64)>::new(); // min, sum, count, max
+    let buf_reader = BufReader::new(file);
+    let mut stats = HashMap::<String, (f64, f64, usize, f64)>::new(); // min, sum, count, max
     for line in buf_reader.lines() {
         match line {
             Ok(data) => {
-                if let Some((name_, tmp_)) = data.split_once(';') {
-                    let name: String = name_.to_string();
+                if let Some((name, tmp_)) = data.split_once(';') {
                     let tmp: f64 = tmp_.parse().expect("");
-                    let ptr = stats.entry(name).or_insert((f64::MAX, 0.0, 0, f64::MIN));
+                    let ptr = match stats.get_mut(name) {
+                        Some(data) => data,
+                        None => {
+                            stats
+                                .entry(name.to_string())
+                                .or_insert((f64::MAX, 0.0, 0, f64::MIN))
+                        }
+                    };
                     ptr.0 = ptr.0.min(tmp);
                     ptr.1 += tmp;
                     ptr.2 += 1;
@@ -24,13 +30,14 @@ fn main() {
                 }
             }
             Err(err) => {
-                print!("Issue in Buffer Reading ");
+                print!("Issue in Buffer Reading {err}");
             }
         }
     }
     display(&stats);
 }
-fn display(stats: &BTreeMap<String, (f64, f64, usize, f64)>) {
+fn display(stats: &HashMap<String, (f64, f64, usize, f64)>) {
+    let stats = BTreeMap::from_iter(stats);
     let mut iter = stats.into_iter().peekable();
     print!("{{");
     while let Some((station, (min_tmp, sum, count, max_tmp))) = iter.next() {
