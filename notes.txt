@@ -6,3 +6,5 @@ hyperfine './target/release/MIllionRecord'
 
 
 time cargo r --release -- --build-std  OR time cargo r --release -- -Zbuild-std
+
+cargo b --release
